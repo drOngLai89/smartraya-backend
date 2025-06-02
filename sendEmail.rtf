@@ -1,0 +1,41 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 const express = require('express');\
+const router = express.Router();\
+const nodemailer = require('nodemailer');\
+\
+router.post('/send-email', async (req, res) => \{\
+  const \{ to, subject, htmlBody \} = req.body;\
+\
+  try \{\
+    // Setup your transport (Gmail example \'96 replace with your SMTP service)\
+    const transporter = nodemailer.createTransport(\{\
+      service: 'gmail',\
+      auth: \{\
+        user: process.env.SMART_RAYA_EMAIL, // set in Render environment\
+        pass: process.env.SMART_RAYA_PASSWORD\
+      \}\
+    \});\
+\
+    const mailOptions = \{\
+      from: `"SmartRaya Card" <$\{process.env.SMART_RAYA_EMAIL\}>`,\
+      to: to,\
+      subject: subject,\
+      html: htmlBody\
+    \};\
+\
+    const info = await transporter.sendMail(mailOptions);\
+    res.status(200).json(\{ success: true, id: info.messageId \});\
+  \} catch (err) \{\
+    console.error("Send email error:", err);\
+    res.status(500).json(\{ success: false, error: err.message \});\
+  \}\
+\});\
+\
+module.exports = router;\
+}
