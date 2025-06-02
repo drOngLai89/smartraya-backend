@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 
 dotenv.config();
 
@@ -9,11 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const configuration = new Configuration({
+// ✅ Initialize OpenAI using v4.x syntax
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
+// 🔥 POST endpoint to generate greeting card
 app.post("/generateCard", async (req, res) => {
   const { occasion, recipient, relationship, traits } = req.body;
 
@@ -31,16 +32,18 @@ Traits / Personal Note: ${traits}
 3. Suitable for printed card
 `;
 
-    const completion = await openai.createChatCompletion({
+    // 🧠 Generate text from GPT-4
+    const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
     });
 
-    const message = completion.data.choices[0].message.content;
+    const message = completion.choices[0].message.content;
 
+    // 🎨 Generate AI image with DALL·E
     const imagePrompt = `Festive ${occasion} greeting card background, soft colors, lights, digital painting, modern Islamic style`;
 
-    const image = await openai.createImage({
+    const image = await openai.images.generate({
       prompt: imagePrompt,
       n: 1,
       size: "512x512",
@@ -48,15 +51,15 @@ Traits / Personal Note: ${traits}
 
     res.json({
       message,
-      imageURL: image.data.data[0].url,
+      imageURL: image.data[0].url,
     });
   } catch (error) {
-    console.error("❌ Error:", error);
-    res.status(500).json({ error: "Something went wrong." });
+    console.error("❌ Error generating card:", error);
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ SmartRaya backend running on port ${PORT}`);
+  console.log(`✅ SmartRaya backend is running on port ${PORT}`);
 });
